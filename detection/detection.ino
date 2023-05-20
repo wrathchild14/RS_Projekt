@@ -1,5 +1,7 @@
 #include <Wire.h>
 #include <Ticker.h>
+#include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
 
 // registers
 #define MAIN_REG_ADDR 0x68
@@ -35,6 +37,16 @@ float vertical_data[DATA_SIZE];
 float horizontal_data[DATA_SIZE];
 int data_idx = 0;
 float get_std_dev(const float* data, int data_size);
+
+const char* ssid = "wifi";
+const char* password = "";
+
+ESP8266WebServer server(80);
+String activity = "unknown";
+
+void handleRoot() {
+  server.send(200, "text/plain", activity);
+}
 
 void calibrate() {
   int iterations = 500;
@@ -154,29 +166,47 @@ void activity_detect() {
   Serial.print(vert_std_dev);
   Serial.print(" hor_std_dev: ");
   Serial.print(hor_std_dev);
-  Serial.print(" ");
+  Serial.println();
 
   if (vert_std_dev > WALKING_THRESHOLD_VER && hor_std_dev > WALKING_THRESHOLD_HOR && vert_std_dev < RUNNING_THRESHOLD_VER && hor_std_dev < RUNNING_THRESHOLD_HOR) {
-    Serial.println("walking");
+    activity = "walking";
   } else if (vert_std_dev > RUNNING_THRESHOLD_VER && hor_std_dev > RUNNING_THRESHOLD_HOR && vert_std_dev < JUMPING_THRESHOLD_VER) {
-    Serial.println("running");
+    activity = "running";
   } else if (vert_std_dev > JUMPING_THRESHOLD_VER) {
-    Serial.println("jumping");
+    activity = "jumping";
   } else if (vert_std_dev > BIKING_THRESHOLD_VER && hor_std_dev > BIKING_THRESHOLD_HOR && vert_std_dev < RUNNING_THRESHOLD_VER) {
-    Serial.println("riding");
+    activity = "riding";
   } else {
-    Serial.println("standing");
+    activity = "standing";
   }
 }
 
 void setup() {
   Serial.begin(115200);
   Wire.begin(12, 14);
+
+
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.print(".");
+  }
+  Serial.println();
+  Serial.println("wifi connected, ur local ip: ");
+  Serial.print(WiFi.localIP());
+  Serial.println();
+
+  server.on("/", handleRoot);
+  server.begin();
+  Serial.println("http server started");
+
+
   calibrate();
   ticker.attach_ms(TICKER_INTERVAL, activity_detect);
 }
 
 void loop() {
+  server.handleClient();
 }
 
 float get_std_dev(const float* data, int data_size) {
