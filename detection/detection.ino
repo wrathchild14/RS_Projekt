@@ -14,10 +14,14 @@ float gyro_off_x = 0.0f;
 float gyro_off_y = 0.0f;
 float gyro_off_z = 0.0f;
 
-const float STANDING_THRESHOLD = 0.5f;
-const float WALKING_THRESHOLD = 1.5f;
-const float RUNNING_THRESHOLD = 4.0f;
-const float BIKING_THRESHOLD = 6.0f;
+// const float STANDING_THRESHOLD = 0.5f;
+const float WALKING_THRESHOLD_VER = 0.1f;
+const float WALKING_THRESHOLD_HOR = 0.05f;
+const float JUMPING_THRESHOLD_VER = 0.7f;
+const float RUNNING_THRESHOLD_VER = 0.5f;
+const float RUNNING_THRESHOLD_HOR = 0.15f;
+const float BIKING_THRESHOLD_VER = 0.2f;
+const float BIKING_THRESHOLD_HOR = 0.2f;
 
 const int TICKER_INTERVAL = 100;
 
@@ -150,18 +154,18 @@ void activity_detect() {
   Serial.print(vert_std_dev);
   Serial.print(" hor_std_dev: ");
   Serial.print(hor_std_dev);
+  Serial.print(" ");
 
-  // Classify activity based on thresholds
-  if (vert_std_dev < STANDING_THRESHOLD && hor_std_dev < STANDING_THRESHOLD) {
-    Serial.println("Standing");
-  } else if (vert_std_dev < WALKING_THRESHOLD && hor_std_dev < WALKING_THRESHOLD) {
-    Serial.println("Walking");
-  } else if (vert_std_dev < RUNNING_THRESHOLD && hor_std_dev < RUNNING_THRESHOLD) {
-    Serial.println("Running");
-  } else if (vert_std_dev < BIKING_THRESHOLD && hor_std_dev < BIKING_THRESHOLD) {
-    Serial.println("Riding a bike");
+  if (vert_std_dev > WALKING_THRESHOLD_VER && hor_std_dev > WALKING_THRESHOLD_HOR && vert_std_dev < RUNNING_THRESHOLD_VER && hor_std_dev < RUNNING_THRESHOLD_HOR) {
+    Serial.println("walking");
+  } else if (vert_std_dev > RUNNING_THRESHOLD_VER && hor_std_dev > RUNNING_THRESHOLD_HOR && vert_std_dev < JUMPING_THRESHOLD_VER) {
+    Serial.println("running");
+  } else if (vert_std_dev > JUMPING_THRESHOLD_VER) {
+    Serial.println("jumping");
+  } else if (vert_std_dev > BIKING_THRESHOLD_VER && hor_std_dev > BIKING_THRESHOLD_HOR && vert_std_dev < RUNNING_THRESHOLD_VER) {
+    Serial.println("riding");
   } else {
-    Serial.println("Unknown activity");
+    Serial.println("standing");
   }
 }
 
