@@ -144,8 +144,13 @@ void activity_detect() {
   float pitch = atan2(-acc_x, sqrt(acc_y * acc_y + acc_z * acc_z));
 
   float vert_comp_acc = acc_z * cos(pitch);
-  // float hor_comp_acc = acc_z * sin(pitch * (PI / 180.0));
-  // float hor_comp_acc = sqrt(acc_x * acc_x + acc_y * acc_y) * sin(pitch * (PI / 180.0));
+  float forward = acc_x * cos(pitch) + acc_y * sin(pitch) * sin(roll);
+  float right = acc_y * cos(roll) - acc_z * sin(roll) * sin(pitch);
+  float hor_comp_acc = sqrt(forward * forward + right * right);
+
+  Serial.print("hor_comp_acc: ");
+  Serial.print(hor_comp_acc);
+
 
   // Serial.print("acceleration: ");
   // Serial.print(acceleration);
@@ -166,10 +171,12 @@ void activity_detect() {
   float vert_std_dev = get_std_dev(vertical_data, DATA_SIZE);
   float hor_std_dev = get_std_dev(horizontal_data, DATA_SIZE);
 
-  Serial.print("roll_std_dev: ");
-  Serial.print(roll_std_dev);
-  Serial.print(" pitch_std_dev: ");
-  Serial.print(pitch_std_dev);
+  float roll_deg = roll * (180.0 / PI);
+  float pitch_deg = pitch * (180.0 / PI);
+  Serial.print("roll: ");
+  Serial.print(roll_deg);
+  Serial.print(" pitch_deg: ");
+  Serial.print(pitch_deg);
   Serial.print(" vert_std_dev: ");
   Serial.print(vert_std_dev);
   Serial.print(" hor_std_dev: ");
