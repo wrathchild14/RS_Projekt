@@ -140,11 +140,12 @@ void activity_detect() {
 
   float acceleration = sqrt(acc_x * acc_x + acc_y * acc_y + acc_z * acc_z);
 
-  float roll = atan2(acc_y, acc_z) * (180.0 / PI);
-  float pitch = atan2(-acc_x, sqrt(acc_y * acc_y + acc_z * acc_z)) * (180.0 / PI);
+  float roll = atan2(acc_y, acc_z);
+  float pitch = atan2(-acc_x, sqrt(acc_y * acc_y + acc_z * acc_z));
 
-  float vert_comp_acc = acc_z * cos(pitch * (PI / 180.0));
-  float hor_comp_acc = acc_z * sin(pitch * (PI / 180.0));
+  float vert_comp_acc = acc_z * cos(pitch);
+  // float hor_comp_acc = acc_z * sin(pitch * (PI / 180.0));
+  // float hor_comp_acc = sqrt(acc_x * acc_x + acc_y * acc_y) * sin(pitch * (PI / 180.0));
 
   // Serial.print("acceleration: ");
   // Serial.print(acceleration);
