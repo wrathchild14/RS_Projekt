@@ -14,8 +14,10 @@ float gyro_off_x = 0.0f;
 float gyro_off_y = 0.0f;
 float gyro_off_z = 0.0f;
 
-const float WALKING_THRESHOLD = 1.f;
-const float RUNNING_THRESHOLD = 4.f;
+const float STANDING_THRESHOLD = 0.5f;
+const float WALKING_THRESHOLD = 1.5f;
+const float RUNNING_THRESHOLD = 4.0f;
+const float BIKING_THRESHOLD = 6.0f;
 
 const int TICKER_INTERVAL = 100;
 
@@ -124,22 +126,6 @@ void activity_detect() {
   float gyro_y = (gyro_raw_y / 131.0f) - gyro_off_y;
   float gyro_z = (gyro_raw_z / 131.0f) - gyro_off_z;
 
-  // pritning of accel and gyro data
-  // Serial.print(acc_x);
-  // Serial.print(" ");
-  // Serial.print(acc_y);
-  // Serial.print(" ");
-  // Serial.print(acc_z);
-  // Serial.println();
-  // Serial.print(gyro_x);
-  // Serial.print(" ");
-  // Serial.print(gyro_y);
-  // Serial.print(" ");
-  // Serial.print(gyro_z);
-  // Serial.println();
-
-  float acceleration = sqrt(acc_x * acc_x + acc_y * acc_y + acc_z * acc_z);
-
   float roll = atan2(acc_y, acc_z);
   float pitch = atan2(-acc_x, sqrt(acc_y * acc_y + acc_z * acc_z));
 
@@ -148,40 +134,35 @@ void activity_detect() {
   float right = acc_y * cos(roll) - acc_z * sin(roll) * sin(pitch);
   float hor_comp_acc = sqrt(forward * forward + right * right);
 
-  Serial.print("hor_comp_acc: ");
-  Serial.print(hor_comp_acc);
+  // Serial.print("hor_comp_acc: ");
+  // Serial.print(hor_comp_acc);
 
-
-  // Serial.print("acceleration: ");
-  // Serial.print(acceleration);
-  // Serial.print("   roll: ");
-  // Serial.print(roll);
-  // Serial.print("   pitch: ");
-  // Serial.print(pitch);
-  // Serial.println();
-
-  roll_data[data_idx] = roll;
-  pitch_data[data_idx] = pitch;
   vertical_data[data_idx] = vert_comp_acc;
   horizontal_data[data_idx] = hor_comp_acc;
   data_idx = (data_idx + 1) % DATA_SIZE;
 
-  float roll_std_dev = get_std_dev(roll_data, DATA_SIZE);
-  float pitch_std_dev = get_std_dev(pitch_data, DATA_SIZE);
   float vert_std_dev = get_std_dev(vertical_data, DATA_SIZE);
   float hor_std_dev = get_std_dev(horizontal_data, DATA_SIZE);
 
-  float roll_deg = roll * (180.0 / PI);
-  float pitch_deg = pitch * (180.0 / PI);
-  Serial.print("roll: ");
-  Serial.print(roll_deg);
-  Serial.print(" pitch_deg: ");
-  Serial.print(pitch_deg);
+  // float roll_deg = roll * (180.0 / PI);
+  // float pitch_deg = pitch * (180.0 / PI);
   Serial.print(" vert_std_dev: ");
   Serial.print(vert_std_dev);
   Serial.print(" hor_std_dev: ");
   Serial.print(hor_std_dev);
-  Serial.println();
+
+  // Classify activity based on thresholds
+  if (vert_std_dev < STANDING_THRESHOLD && hor_std_dev < STANDING_THRESHOLD) {
+    Serial.println("Standing");
+  } else if (vert_std_dev < WALKING_THRESHOLD && hor_std_dev < WALKING_THRESHOLD) {
+    Serial.println("Walking");
+  } else if (vert_std_dev < RUNNING_THRESHOLD && hor_std_dev < RUNNING_THRESHOLD) {
+    Serial.println("Running");
+  } else if (vert_std_dev < BIKING_THRESHOLD && hor_std_dev < BIKING_THRESHOLD) {
+    Serial.println("Riding a bike");
+  } else {
+    Serial.println("Unknown activity");
+  }
 }
 
 void setup() {
