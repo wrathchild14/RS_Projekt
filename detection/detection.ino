@@ -26,6 +26,8 @@ const float BIKING_THRESHOLD_VER = 0.2f;
 const float BIKING_THRESHOLD_HOR = 0.2f;
 
 const int TICKER_INTERVAL = 100;
+const float ALPHA = 0.98f;
+const float DT = 0.1f;
 
 Ticker ticker;
 
@@ -144,6 +146,9 @@ void activity_detect() {
 
   float roll = atan2(acc_y, acc_z);
   float pitch = atan2(-acc_x, sqrt(acc_y * acc_y + acc_z * acc_z));
+
+  roll = ALPHA * (roll + gyro_x * DT) + (1.0f - ALPHA) * roll;
+  pitch = ALPHA * (pitch + gyro_y * DT) + (1.0f - ALPHA) * pitch;
 
   float vert_comp_acc = acc_z * cos(pitch);
   float forward = acc_x * cos(pitch) + acc_y * sin(pitch) * sin(roll);
