@@ -40,12 +40,18 @@ void calibrateSensors() {
   for (int i = 0; i < iterations; i++) {
     Wire.beginTransmission(MAIN_REG_ADDR);
     Wire.write(REG_ACCEL_XOUT_H);
-    Wire.endTransmission(false);
-    Wire.requestFrom(MAIN_REG_ADDR, 12, true);
+    Wire.endTransmission();
+    Wire.requestFrom(MAIN_REG_ADDR, 6);
 
     int16_t accelRawX = (Wire.read() << 8) | Wire.read();
     int16_t accelRawY = (Wire.read() << 8) | Wire.read();
     int16_t accelRawZ = (Wire.read() << 8) | Wire.read();
+
+    Wire.beginTransmission(MAIN_REG_ADDR);
+    Wire.write(REG_GYRO_XOUT_H);
+    Wire.endTransmission();
+
+    Wire.requestFrom(MAIN_REG_ADDR, 6);
 
     int16_t gyroRawX = (Wire.read() << 8) | Wire.read();
     int16_t gyroRawY = (Wire.read() << 8) | Wire.read();
@@ -91,11 +97,17 @@ void detectWalking() {
   Wire.write(REG_ACCEL_XOUT_H);
   Wire.endTransmission();
 
-  Wire.requestFrom(MAIN_REG_ADDR, 12);
+  Wire.requestFrom(MAIN_REG_ADDR, 6);
 
   int16_t accelRawX = (Wire.read() << 8) | Wire.read();
   int16_t accelRawY = (Wire.read() << 8) | Wire.read();
   int16_t accelRawZ = (Wire.read() << 8) | Wire.read();
+
+  Wire.beginTransmission(MAIN_REG_ADDR);
+  Wire.write(REG_GYRO_XOUT_H);
+  Wire.endTransmission();
+
+  Wire.requestFrom(MAIN_REG_ADDR, 6);
 
   int16_t gyroRawX = (Wire.read() << 8) | Wire.read();
   int16_t gyroRawY = (Wire.read() << 8) | Wire.read();
@@ -130,35 +142,13 @@ void detectWalking() {
   float roll = atan2(accelY, accelZ) * (180.0 / PI);
   float pitch = atan2(-accelX, sqrt(accelY * accelY + accelZ * accelZ)) * (180.0 / PI);
 
-  if (previousAccelValue > currentAccelValue && previousAccelValue > acceleration && previousAccelValue > PEAK_MINIMUM_THRESHOLD) {
-    isStep = true;
-  } else {
-    isStep = false;
-  }
-
-  if (acceleration > JUMP_THRESHOLD) {
-    isJump = true;
-  } else {
-    isJump = false;
-  }
-
-  previousAccelValue = currentAccelValue;
-  currentAccelValue = acceleration;
-
   Serial.print("acceleration: ");
   Serial.print(acceleration);
   Serial.print("   roll: ");
   Serial.print(roll);
   Serial.print("   pitch: ");
   Serial.print(pitch);
-
-  if (isStep) {
-    Serial.println("step");
-  }
-
-  if (isJump) {
-    Serial.println("jump");
-  }
+  Serial.println();
 }
 
 void setup() {
