@@ -17,13 +17,22 @@ float gyro_off_y = 0.0f;
 float gyro_off_z = 0.0f;
 
 // const float STANDING_THRESHOLD = 0.5f;
-const float WALKING_THRESHOLD_VER = 0.1f;
-const float WALKING_THRESHOLD_HOR = 0.05f;
-const float JUMPING_THRESHOLD_VER = 0.7f;
-const float RUNNING_THRESHOLD_VER = 0.5f;
-const float RUNNING_THRESHOLD_HOR = 0.15f;
+const float WALKING_THRESHOLD_VER = 0.2f;
+const float WALKING_THRESHOLD_HOR = 0.2f;
+const float JUMPING_THRESHOLD_VER = 0.8f;
+const float RUNNING_THRESHOLD_VER = 0.4f;
+const float RUNNING_THRESHOLD_HOR = 0.4f;
 const float BIKING_THRESHOLD_VER = 0.2f;
-const float BIKING_THRESHOLD_HOR = 0.2f;
+const float BIKING_THRESHOLD_HOR = 0.4f;
+
+// old values without complementary filter
+// const float WALKING_THRESHOLD_VER = 0.1f;
+// const float WALKING_THRESHOLD_HOR = 0.05f;
+// const float JUMPING_THRESHOLD_VER = 0.7f;
+// const float RUNNING_THRESHOLD_VER = 0.5f;
+// const float RUNNING_THRESHOLD_HOR = 0.15f;
+// const float BIKING_THRESHOLD_VER = 0.2f;
+// const float BIKING_THRESHOLD_HOR = 0.2f;
 
 const int TICKER_INTERVAL = 100;
 const float ALPHA = 0.98f;
@@ -33,8 +42,6 @@ Ticker ticker;
 
 // classification properties
 const int DATA_SIZE = 10;
-float roll_data[DATA_SIZE];
-float pitch_data[DATA_SIZE];
 float vertical_data[DATA_SIZE];
 float horizontal_data[DATA_SIZE];
 int data_idx = 0;
@@ -150,9 +157,22 @@ void activity_detect() {
   roll = ALPHA * (roll + gyro_x * DT) + (1.0f - ALPHA) * roll;
   pitch = ALPHA * (pitch + gyro_y * DT) + (1.0f - ALPHA) * pitch;
 
+  float roll_deg = roll * (180.0 / PI);
+  float pitch_deg = pitch * (180.0 / PI);
+  Serial.print(" roll_deg: ");
+  Serial.print(roll_deg);
+  Serial.print(" pitch_deg: ");
+  Serial.print(pitch_deg);
+
   float vert_comp_acc = acc_z * cos(pitch);
   float forward = acc_x * cos(pitch) + acc_y * sin(pitch) * sin(roll);
   float right = acc_y * cos(roll) - acc_z * sin(roll) * sin(pitch);
+
+  Serial.print(" forward: ");
+  Serial.print(forward);
+  Serial.print(" right: ");
+  Serial.print(right);
+
   float hor_comp_acc = sqrt(forward * forward + right * right);
 
   // Serial.print("hor_comp_acc: ");
@@ -171,7 +191,6 @@ void activity_detect() {
   Serial.print(vert_std_dev);
   Serial.print(" hor_std_dev: ");
   Serial.print(hor_std_dev);
-  Serial.println();
 
   if (vert_std_dev > WALKING_THRESHOLD_VER && hor_std_dev > WALKING_THRESHOLD_HOR && vert_std_dev < RUNNING_THRESHOLD_VER && hor_std_dev < RUNNING_THRESHOLD_HOR) {
     activity = "walking";
@@ -184,6 +203,8 @@ void activity_detect() {
   } else {
     activity = "standing";
   }
+  Serial.print(activity);
+  Serial.println();
 }
 
 void setup() {
