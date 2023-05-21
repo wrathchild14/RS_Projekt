@@ -11,8 +11,9 @@
 #define REG_GYRO_XOUT_H 0x43
 
 // options
-const bool DEBUG_MODE = true;
-const bool COMPLEMENTARY_FILTER = true;
+const bool DEBUG_MODE = false;
+const bool COMPLEMENTARY_FILTER = false;
+const int CALIB_ITERATIONS = 500;
 
 // calibration values
 float accel_off_x = 0.0f;
@@ -51,8 +52,6 @@ ESP8266WebServer server(80);
 String activity = "unknown";
 
 void calibrate() {
-  int iterations = 500;
-
   float acc_x = 0.0f;
   float acc_y = 0.0f;
   float acc_z = 0.0f;
@@ -60,7 +59,7 @@ void calibrate() {
   float gyro_y = 0.0f;
   float gyro_z = 0.0f;
 
-  for (int i = 0; i < iterations; i++) {
+  for (int i = 0; i < CALIB_ITERATIONS; i++) {
     Wire.beginTransmission(MAIN_REG_ADDR);
     Wire.write(REG_ACCEL_XOUT_H);
     Wire.endTransmission();
@@ -91,14 +90,14 @@ void calibrate() {
   }
 
   // [-1, 1]
-  accel_off_x = acc_x / iterations;
-  accel_off_y = acc_y / iterations;
+  accel_off_x = acc_x / CALIB_ITERATIONS;
+  accel_off_y = acc_y / CALIB_ITERATIONS;
   // [0, 2]
-  accel_off_z = (acc_z / iterations) - 1.0f;  // 1g for gravity
+  accel_off_z = (acc_z / CALIB_ITERATIONS) - 1.0f;  // 1g for gravity
 
-  gyro_off_x = gyro_x / iterations;
-  gyro_off_y = gyro_y / iterations;
-  gyro_off_z = gyro_z / iterations;
+  gyro_off_x = gyro_x / CALIB_ITERATIONS;
+  gyro_off_y = gyro_y / CALIB_ITERATIONS;
+  gyro_off_z = gyro_z / CALIB_ITERATIONS;
 
   Serial.println("calibration complete");
   Serial.print("acc offsets (X, Y, Z): ");
