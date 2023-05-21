@@ -8,8 +8,9 @@
 #define REG_ACCEL_XOUT_H 0x3B
 #define REG_GYRO_XOUT_H 0x43
 
+// options
 const bool DEBUG_MODE = true;
-const bool COMPOMENTARY_FILTER = false;
+const bool COMPLEMENTARY_FILTER = true;
 
 // calibration values
 float accel_off_x = 0.0f;
@@ -19,24 +20,14 @@ float gyro_off_x = 0.0f;
 float gyro_off_y = 0.0f;
 float gyro_off_z = 0.0f;
 
-if (COMPOMENTARY_FILTER) {
-  const float WALKING_THRESHOLD_VER = 0.2f;
-  const float WALKING_THRESHOLD_HOR = 0.2f;
-  const float JUMPING_THRESHOLD_VER = 0.8f;
-  const float RUNNING_THRESHOLD_VER = 0.4f;
-  const float RUNNING_THRESHOLD_HOR = 0.4f;
-  const float BIKING_THRESHOLD_VER = 0.2f;
-  const float BIKING_THRESHOLD_HOR = 0.4f;
-} else {
-  // old values without complementary filter
-  const float WALKING_THRESHOLD_VER = 0.1f;
-  const float WALKING_THRESHOLD_HOR = 0.05f;
-  const float JUMPING_THRESHOLD_VER = 0.7f;
-  const float RUNNING_THRESHOLD_VER = 0.5f;
-  const float RUNNING_THRESHOLD_HOR = 0.15f;
-  const float BIKING_THRESHOLD_VER = 0.2f;
-  const float BIKING_THRESHOLD_HOR = 0.2f;
-}
+// old values without complementary filter
+const float WALKING_THRESHOLD_VER = 0.1f;
+const float WALKING_THRESHOLD_HOR = 0.05f;
+const float JUMPING_THRESHOLD_VER = 0.7f;
+const float RUNNING_THRESHOLD_VER = 0.5f;
+const float RUNNING_THRESHOLD_HOR = 0.15f;
+const float BIKING_THRESHOLD_VER = 0.2f;
+const float BIKING_THRESHOLD_HOR = 0.2f;
 
 const int TICKER_INTERVAL = 100;
 const float ALPHA = 0.98f;
@@ -56,10 +47,6 @@ const char* password = "monkiestuff";
 
 ESP8266WebServer server(80);
 String activity = "unknown";
-
-void handleRoot() {
-  server.send(200, "text/plain", activity);
-}
 
 void calibrate() {
   int iterations = 500;
@@ -220,6 +207,16 @@ void activity_detect() {
 }
 
 void setup() {
+  if (COMPLEMENTARY_FILTER) {
+    const float WALKING_THRESHOLD_VER = 0.2f;
+    const float WALKING_THRESHOLD_HOR = 0.2f;
+    const float JUMPING_THRESHOLD_VER = 0.8f;
+    const float RUNNING_THRESHOLD_VER = 0.4f;
+    const float RUNNING_THRESHOLD_HOR = 0.4f;
+    const float BIKING_THRESHOLD_VER = 0.2f;
+    const float BIKING_THRESHOLD_HOR = 0.4f;
+  }
+
   Serial.begin(115200);
   Wire.begin(12, 14);
 
@@ -235,13 +232,37 @@ void setup() {
   Serial.print(WiFi.localIP());
   Serial.println();
 
-  server.on("/", handleRoot);
+  server.on("/", handle_root);
+  server.on("/activity", handle_activity);
+
   server.begin();
   Serial.println("http server started");
 
-
   calibrate();
   ticker.attach_ms(TICKER_INTERVAL, activity_detect);
+}
+
+void handle_root() {
+   String html = "<html><head><script>"
+                "function getActivity() {"
+                "  var xhttp = new XMLHttpRequest();"
+                "  xhttp.onreadystatechange = function() {"
+                "    if (this.readyState == 4 && this.status == 200) {"
+                "      document.getElementById('activity').innerText = this.responseText;"
+                "    }"
+                "  };"
+                "  xhttp.open('GET', '/activity', true);"
+                "  xhttp.send();"
+                "}"
+                "setInterval(getActivity, 1000);" // get activity every 1 second
+                "</script></head><body>"
+                "<h1>Activity: <span id=\"activity\"></span></h1>"
+                "</body></html>";
+  server.send(200, "text/html", html);
+}
+
+void handle_activity() {
+  server.send(200, "text/plain", activity);
 }
 
 void loop() {
