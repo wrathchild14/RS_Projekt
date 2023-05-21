@@ -3,6 +3,8 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 
+#include "server.h"
+
 // registers
 #define MAIN_REG_ADDR 0x68
 #define REG_ACCEL_XOUT_H 0x3B
@@ -232,37 +234,14 @@ void setup() {
   Serial.print(WiFi.localIP());
   Serial.println();
 
-  server.on("/", handle_root);
-  server.on("/activity", handle_activity);
+  server.on("/", handleRoot);
+  server.on("/activity", handleActivity);
 
   server.begin();
   Serial.println("http server started");
 
   calibrate();
   ticker.attach_ms(TICKER_INTERVAL, activity_detect);
-}
-
-void handle_root() {
-   String html = "<html><head><script>"
-                "function getActivity() {"
-                "  var xhttp = new XMLHttpRequest();"
-                "  xhttp.onreadystatechange = function() {"
-                "    if (this.readyState == 4 && this.status == 200) {"
-                "      document.getElementById('activity').innerText = this.responseText;"
-                "    }"
-                "  };"
-                "  xhttp.open('GET', '/activity', true);"
-                "  xhttp.send();"
-                "}"
-                "setInterval(getActivity, 1000);" // get activity every 1 second
-                "</script></head><body>"
-                "<h1>Activity: <span id=\"activity\"></span></h1>"
-                "</body></html>";
-  server.send(200, "text/html", html);
-}
-
-void handle_activity() {
-  server.send(200, "text/plain", activity);
 }
 
 void loop() {
